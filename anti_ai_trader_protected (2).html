@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>VIP — Anti-AI Trader (Protected)</title>
+<style>
+  body{font-family:system-ui,Arial;background:#f6fbff;margin:12px;color:#07204a}
+  .box{max-width:980px;margin:20px auto}
+  .overlay{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(8,12,30,0.86);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .card{background:#fff;padding:18px;border-radius:12px;max-width:520px;width:92%;box-shadow:0 10px 30px rgba(2,12,40,0.4)}
+  h1{margin:0 0 6px;font-size:18px}
+  input{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #d7e6f6;box-sizing:border-box}
+  button{padding:10px 12px;border-radius:8px;border:0;background:#0b6efd;color:#fff;cursor:pointer}
+  button.gray{background:#6c757d}
+  .small{font-size:13px;color:#334;margin-top:8px}
+  .welcome{font-weight:700;color:#052a67;margin-bottom:8px;text-align:center}
+  #appArea{margin-top:12px}
+</style>
+</head>
+<body>
+<div class="box">
+  <!-- App area (hidden until login) -->
+  <div id="appArea" style="display:none">
+<div style='padding:12px'><h3>Anti-AI Trader App</h3><p>App content not found. Paste your app HTML here.</p></div>
+  </div>
+</div>
+
+<!-- Login overlay -->
+<div id="loginOverlay" class="overlay">
+  <div class="card">
+    <div class="welcome">WELCOME BTC SOLDIERS COMMUNITY OF VIP MEMBER</div>
+    <div class="small">Login with your VIP username & password to open the tool.</div>
+    <label>Username</label>
+    <input id="loginUser" placeholder="Username" autocomplete="off"/>
+    <label>Password</label>
+    <input id="loginPass" type="password" placeholder="Password" autocomplete="off"/>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="loginBtn">Open</button>
+      <button id="demoBtn" class="gray">Demo (no verify)</button>
+    </div>
+    <div id="loginMsg" class="small" style="color:#c0392b;margin-top:8px"></div>
+    <div class="small" style="margin-top:10px;color:#666">Note: This page verifies credentials online. Admin can change credentials remotely via admin panel.</div>
+  </div>
+</div>
+
+<script>
+/*
+  PROTECTED CLIENT
+  Replace FUNCTION_BASE_URL below with your deployed Cloud Functions base URL,
+  e.g. "https://us-central1-yourproject.cloudfunctions.net"
+*/
+const FUNCTION_BASE_URL = "REPLACE_WITH_YOUR_FUNCTION_BASE_URL"; // <<-- set this after you deploy functions
+const VERIFY_ENDPOINT = FUNCTION_BASE_URL + "/verify";
+
+function showMsg(text, isError){ const el = document.getElementById('loginMsg'); el.style.color = isError ? '#c0392b' : '#0b6efd'; el.textContent = text; }
+
+document.getElementById('loginBtn').addEventListener('click', async ()=>{
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if(!u || !p){ showMsg('Username এবং Password দিন', true); return; }
+  if(FUNCTION_BASE_URL.startsWith('REPLACE')){ showMsg('FUNCTION_BASE_URL সেট করে দাও (deploy করে পাওয়া URL)', true); return; }
+  showMsg('Checking...', false);
+  try{
+    const res = await fetch(VERIFY_ENDPOINT, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username: u, password: p})
+    });
+    const j = await res.json();
+    if(res.ok && j.ok){
+      // success: hide overlay, show app
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('appArea').style.display = 'block';
+    } else {
+      showMsg(j && j.msg ? j.msg : 'Invalid credentials', true);
+    }
+  } catch(e){
+    console.error(e);
+    showMsg('Connection error — functions URL ঠিক আছে কি না দেখে নাও।', true);
+  }
+});
+
+// Demo button to view app locally without verify (for quick testing)
+document.getElementById('demoBtn').addEventListener('click', ()=>{
+  if(!confirm('Demo mode: app will open without verification. Use only for testing. Continue?')) return;
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('appArea').style.display = 'block';
+});
+</script>
+</body>
+</html>
